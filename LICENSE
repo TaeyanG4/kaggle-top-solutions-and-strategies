@@ -1,0 +1,12 @@
+Kaggle Top Solutions and Strategies
+Copyright (c) 2026 TaeyanG4
+
+The data, documentation, notebook and example code in this repository are licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0), the same license as the Kaggle
+dataset: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Third-party material:
+- Competition facts, final private ranks and medals come from Meta Kaggle (Kaggle, Apache License 2.0):
+  https://www.kaggle.com/datasets/kaggle/meta-kaggle
+- Solution writeups belong to their authors. They are linked through `writeup_url`, not copied; the file holds short
+  model-written summaries and technique tags. Please credit the original authors when you use their ideas.
