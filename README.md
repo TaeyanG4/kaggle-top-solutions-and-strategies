@@ -268,7 +268,7 @@ strat = strategies.csv. The same descriptions, with the example, are attached to
 | `writeup_url` | sol strat | Link to the original solution writeup (Kaggle discussion / writeup page, GitHub, or blog); strategy rows repeat the link of their solution. | https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/discussion/4… |
 | `solution_title` | sol | Title of the writeup as posted (for a GitHub README without one: its first heading); empty when neither exists. | 1st place solution |
 | `rank` | sol strat | Final private leaderboard rank of the team (see rank_status). Empty when unknown. | `1` |
-| `rank_status` | sol strat | official_meta_kaggle = rank from official Meta Kaggle team data; reported_only = rank stated by the author or a source only; bound_only = only a bound such as top 10; unknown. | `official_meta_kaggle` |
+| `rank_status` | sol strat | official_meta_kaggle = rank from official Meta Kaggle team data; reported_only = rank stated by the author or a source only (with an empty rank: the reported ranks disagree, so none is chosen); bound_only = only a bound such as top 10; unknown. | `official_meta_kaggle` |
 | `medal` | sol strat | Official medal of the team: gold, silver or bronze; none = officially ranked without a medal (outside the medal zone, or a competition without medals); empty = unknown (the rank is not official). | `gold` |
 | `source_type` | sol | Where the writeup lives: kaggle_official_writeup, kaggle_discussion_unlinked, kaggle_writeup_page, kaggle_notebook, kaggle_other_page, kaggle_blog_legacy, github_repo, external_web. | `kaggle_official_writeup` |
 | `team_link` | sol | official_team_link = the writeup is tied to the official team; claimed_only = only the author's claim links it; unknown. | `official_team_link` |
@@ -308,7 +308,7 @@ strat = strategies.csv. The same descriptions, with the example, are attached to
 | value | rows | meaning |
 |---|---:|---|
 | `official_meta_kaggle` | 6,016 | rank from official Meta Kaggle team data |
-| `reported_only` | 942 | rank stated by the author or a source only |
+| `reported_only` | 942 | rank stated by the author or a source only (empty `rank`: the reports disagree) |
 | `unknown` | 279 | rank not known (`rank` is empty) |
 
 `writeup_kind` (solution rows)
@@ -486,6 +486,5 @@ loads the file and shows interactive charts and ready-made tools for AI agents. 
 | 2026-10-23 | 0.4.0 (Kaggle v2) | First full release: solution writeups of all ranks for 677 finished competitions (2010-2026) with short summaries and techniques, in one CSV with links instead of writeup text. |
 | 2026-10-23 | 0.3.0-pilot.1 (Kaggle v1) | Pilot: 50 reviewed method applications from 7 solution READMEs and a historical solution index. |
 
-Planned monthly. Competitions that ended within the last year are re-checked for late writeups (daily at first, then
-every 3 days, weekly from day 61 and monthly from day 181). Each version replaces the file; earlier versions stay in
-the version history.
+New versions are uploaded after the owner reviews an update. Each version replaces the files; earlier
+versions stay in the version history.
