@@ -390,7 +390,7 @@ comps = comps.assign(task_type=comps.task_type.map(json.loads),
 seg = strat[strat.task_type.str.contains("segmentation", na=False)
             & strat.modalities.str.contains("image", na=False)
             & (strat["rank"] <= 10) & (strat.usage_status == "final_used")]
-print(seg.technique_name.value_counts().head(15))
+print(seg.groupby("technique_name").writeup_id.nunique().nlargest(15))
 
 # 2. All solutions of one competition, best rank first (any rank)
 slug = "child-mind-institute-detect-sleep-states"
