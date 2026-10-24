@@ -27,24 +27,6 @@ Built for people and **AI agents** looking for proven strategies: *"which techni
 segmentation competitions?"*, *"what did teams ranked beyond 100 do differently from the winners?"*, *"what did the
 winners of competitions like mine do?"*.
 
-## Example notebook
-
-**[Open the example notebook: Getting Started with Kaggle Top Solutions](https://www.kaggle.com/code/taeyangg4/getting-started-with-kaggle-top-solutions)**
-loads the file and shows interactive charts and ready-made tools for AI agents. Use *Copy & Edit* to run it yourself; a copy is in `notebooks/getting_started.ipynb`.
-
-## Update log
-
-| date (UTC) | version | what changed |
-|---|---|---|
-| 2026-10-24 | 20261024T054530Z (Kaggle v4) | Added rsna-knee-abnormality-detection (ended 2026-10-22): 19 solution writeups and 215 technique rows; ranks come from the writeup titles until Kaggle publishes the final leaderboard. kaggriculture ranks and medals are now official (Meta Kaggle 2364). One more Cassava writeup summarized. |
-| 2026-10-24 | 0.5.0 (Kaggle v3) | Same rows as 0.4.0; the file is now kaggle_all_solutions_and_strategies.csv. Data card: example rows, an example value for every column, a usage and AI agent guide, diagrams, charts and this log. Example notebook: interactive charts and agent tools. |
-| 2026-10-23 | 0.4.0 (Kaggle v2) | First full release: solution writeups of all ranks for 677 finished competitions (2010-2026) with short summaries and techniques, in one CSV with links instead of writeup text. |
-| 2026-10-23 | 0.3.0-pilot.1 (Kaggle v1) | Pilot: 50 reviewed method applications from 7 solution READMEs and a historical solution index. |
-
-Planned monthly. Competitions that ended within the last year are re-checked for late writeups (daily at first, then
-every 3 days, weekly from day 61 and monthly from day 181). Each version replaces the file; earlier versions stay in
-the version history.
-
 ## What you can do with it
 
 - **Find what worked**: the `final_used` techniques of top-ranked solutions in competitions like yours, by pipeline stage.
@@ -473,3 +455,21 @@ describes version 20261024T054530Z.
 만들었습니다. 원문은 복사하지 않고 링크(`writeup_url`)로 연결합니다. 같은 데이터는
 [Kaggle 데이터셋](https://www.kaggle.com/datasets/taeyangg4/kaggle-top-solutions-and-strategies)에도 있으며, 매월 갱신을 목표로 합니다. 데이터를 모으고
 정리하는 수집 코드는 이 저장소에 포함하지 않았습니다.
+
+## Example notebook
+
+**[Open the example notebook: Getting Started with Kaggle Top Solutions](https://www.kaggle.com/code/taeyangg4/getting-started-with-kaggle-top-solutions)**
+loads the file and shows interactive charts and ready-made tools for AI agents. Use *Copy & Edit* to run it yourself; a copy is in `notebooks/getting_started.ipynb`.
+
+## Update log
+
+| date (UTC) | version | what changed |
+|---|---|---|
+| 2026-10-24 | 20261024T054530Z (Kaggle v4) | Added rsna-knee-abnormality-detection (ended 2026-10-22): 19 solution writeups and 215 technique rows; ranks come from the writeup titles until Kaggle publishes the final leaderboard. kaggriculture ranks and medals are now official (Meta Kaggle 2364). One more Cassava writeup summarized. |
+| 2026-10-24 | 0.5.0 (Kaggle v3) | Same rows as 0.4.0; the file is now kaggle_all_solutions_and_strategies.csv. Data card: example rows, an example value for every column, a usage and AI agent guide, diagrams, charts and this log. Example notebook: interactive charts and agent tools. |
+| 2026-10-23 | 0.4.0 (Kaggle v2) | First full release: solution writeups of all ranks for 677 finished competitions (2010-2026) with short summaries and techniques, in one CSV with links instead of writeup text. |
+| 2026-10-23 | 0.3.0-pilot.1 (Kaggle v1) | Pilot: 50 reviewed method applications from 7 solution READMEs and a historical solution index. |
+
+Planned monthly. Competitions that ended within the last year are re-checked for late writeups (daily at first, then
+every 3 days, weekly from day 61 and monthly from day 181). Each version replaces the file; earlier versions stay in
+the version history.
