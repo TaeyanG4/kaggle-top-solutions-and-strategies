@@ -1,4 +1,4 @@
-"""Query tools over kaggle_all_solutions_and_strategies.csv (pandas), small enough to register as LLM agent tools.
+"""Query tools over the split CSVs in data/ (pandas), small enough to register as LLM agent tools.
 
 Run `python examples/agent_tools.py` for a demo. Every result carries `writeup_url` links: cite them instead of
 inventing results. Summaries and techniques are author claims extracted by a model.
@@ -7,11 +7,10 @@ from pathlib import Path
 
 import pandas as pd
 
-PATH = Path(__file__).resolve().parents[1] / "data" / "kaggle_all_solutions_and_strategies.csv"
-df = pd.read_csv(PATH, low_memory=False)
-comps = df[df.record_type == "competition"]
-sols = df[df.record_type == "solution"]
-strat = df[df.record_type == "strategy"]
+DATA = Path(__file__).resolve().parents[1] / "data"
+comps = pd.read_csv(DATA / "competitions.csv")
+sols = pd.read_csv(DATA / "solutions.csv")
+strat = pd.read_csv(DATA / "strategies.csv")  # every row carries its solution's writeup_url
 
 
 def similar(text, n=5):
@@ -31,10 +30,7 @@ def strategies_for(task_type=None, modality=None, max_rank=10,
         s = s[s.modalities.str.contains(f'"{modality}"', na=False)]
     if max_rank:
         s = s[s["rank"] <= max_rank]
-    # writeup_url is empty on strategy rows: take it from the solution rows
-    links = sols[["writeup_id", "writeup_url"]]
-    s = s.drop(columns="writeup_url").merge(links, on="writeup_id")
-    out = s.groupby("technique_name").agg(
+    out = s.groupby("technique_name").agg(  # each strategy row has its link
         solutions=("writeup_id", "nunique"), example=("writeup_url", "first"))
     return out.sort_values("solutions", ascending=False).head(top)
 
@@ -43,7 +39,6 @@ def advise(problem, n_competitions=5, max_rank=20, per_stage=3):
     """Similar competitions -> their solutions up to max_rank -> final techniques by stage, plus dropped ideas."""
     found = similar(problem, n_competitions)
     s = strat[strat.competition_slug.isin(found.competition_slug) & (strat['rank'] <= max_rank)]
-    s = s.drop(columns='writeup_url').merge(sols[['writeup_id', 'writeup_url']], on='writeup_id')
     plan = (s[s.usage_status == 'final_used'].groupby(['pipeline_stage', 'technique_name'])
             .agg(solutions=('writeup_id', 'nunique'), example=('writeup_url', 'first'))
             .sort_values('solutions', ascending=False).groupby(level=0).head(per_stage).sort_index(level=0, sort_remaining=False))

@@ -2,6 +2,12 @@
 
 Newest first. Dates are UTC.
 
+## 0.6.0 (Kaggle v5) — 2026-10-24
+
+Added competitions.csv, solutions.csv and strategies.csv: the same rows as the merged main file (now kaggle_all_solutions_and_strategies_merged.csv) without not-applicable columns. Filled 283 empty solution titles (official Kaggle post titles, README headings), medal none for 1,089 officially ranked solutions without a medal, writeup_url on every strategy row, and a new reward_type column; empty metric and prize values are explained in the column descriptions.
+
+Rows: 678 competitions, 7,237 solutions, 62,661 techniques.
+
 ## 20261024T054530Z (Kaggle v4) — 2026-10-24
 
 Added rsna-knee-abnormality-detection (ended 2026-10-22): 19 solution writeups and 215 technique rows; ranks come from the writeup titles until Kaggle publishes the final leaderboard. kaggriculture ranks and medals are now official (Meta Kaggle 2364). One more Cassava writeup summarized.

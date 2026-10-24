@@ -6,8 +6,9 @@
 
 | path | what it is |
 |---|---|
-| `data/kaggle_all_solutions_and_strategies.csv` | the dataset: one CSV, three record types (described below) |
-| `data/column_descriptions.json` | every column with its meaning and a real example value |
+| `data/kaggle_all_solutions_and_strategies_merged.csv` | the main file: every record type merged in one CSV (`record_type`) |
+| `data/competitions.csv`, `data/solutions.csv`, `data/strategies.csv` | the same rows split by record type |
+| `data/column_descriptions.json` | every column of every file with its meaning and a real example value |
 | `notebooks/getting_started.ipynb` | loading the file, interactive charts, agent tools |
 | `examples/agent_tools.py` | `similar`, `strategies_for` and `advise` as plain Python functions |
 | `CHANGELOG.md` | what changed in each version |
@@ -16,8 +17,9 @@ The collection pipeline that builds this file (Kaggle API collectors, LLM extrac
 this repository.
 
 **Public solution writeups of finished Kaggle competitions — all ranks, not only the winners — with a short summary
-of each approach and the techniques it used, in one CSV.** 678 competitions (2010–2026),
-7,237 solution writeups and 62,661 technique rows, each linked back to the original writeup.
+of each approach and the techniques it used.** 678 competitions (2010–2026), 7,237
+solution writeups and 62,661 technique rows, each linked back to the original writeup: in one merged CSV
+(the main file) and, the same rows, in three split CSVs.
 
 > **About the name:** the title and URL say "Top", but the dataset is not limited to top teams: it collects every
 > public solution writeup that could be found, of any rank (920 solutions ranked beyond 100 and
@@ -33,7 +35,7 @@ winners of competitions like mine do?"*.
 - **Find what did not work**: `tested_rejected` and `failed` rows are ideas that strong teams tried and dropped.
 - **Compare ranks**: solutions of every rank are included, so top-10 and beyond-100 solutions of the same
   competition can be compared.
-- **Go to the source**: every solution row links to the original writeup (`writeup_url`).
+- **Go to the source**: every solution and strategy row links to the original writeup (`writeup_url`).
 
 ```text
 your problem: "predict sleep events from wrist accelerometer data"
@@ -54,18 +56,19 @@ your problem: "predict sleep events from wrist accelerometer data"
 
 ## Use it with an AI agent
 
-The file is one self-describing CSV (about 32 MB), so an LLM agent with a Python or SQL tool can query it directly.
-Three patterns work well:
+The files are self-describing CSVs, so an LLM agent with a Python or SQL tool can query them directly. Three
+patterns work well:
 
-1. **Give the agent a table tool** (pandas or DuckDB over the CSV) and instructions like these:
+1. **Give the agent a table tool** (pandas or DuckDB over the CSVs) and instructions like these:
 
 ```text
-You can query kaggle_all_solutions_and_strategies.csv, a table of Kaggle
-solution writeups (filter on record_type). To advise on a new problem:
-1. Find 5-10 similar competitions (competition rows: task_type,
-   modalities, metric_name, target_summary).
-2. Read their solution rows with rank <= 20 and the strategy rows of
-   those solutions.
+You can query Kaggle solution writeups in competitions.csv, solutions.csv
+and strategies.csv (the same rows are in one merged file, filtered by
+record_type). To advise on a new problem:
+1. Find 5-10 similar competitions (competitions: task_type, modalities,
+   metric_name, target_summary).
+2. Read their solutions with rank <= 20 and the strategies of those
+   solutions.
 3. Recommend techniques by pipeline_stage from usage_status ==
    "final_used"; list "tested_rejected" and "failed" techniques
    separately as ideas that did not help.
@@ -87,10 +90,7 @@ def strategies_for(task_type=None, modality=None, max_rank=10,
         s = s[s.modalities.str.contains(f'"{modality}"', na=False)]
     if max_rank:
         s = s[s["rank"] <= max_rank]
-    # writeup_url is empty on strategy rows: take it from the solution rows
-    links = sols[["writeup_id", "writeup_url"]]
-    s = s.drop(columns="writeup_url").merge(links, on="writeup_id")
-    out = s.groupby("technique_name").agg(
+    out = s.groupby("technique_name").agg(  # each strategy row has its link
         solutions=("writeup_id", "nunique"), example=("writeup_url", "first"))
     return out.sort_values("solutions", ascending=False).head(top)
 
@@ -98,9 +98,9 @@ strategies_for("segmentation", "image")  # what top-10 teams used
 strategies_for("segmentation", "image", status="failed")  # dropped ideas
 ```
 
-3. **Retrieval (RAG)**: embed `competition_title` + `target_summary` (competition rows) and `solution_summary`
-   (solution rows), retrieve the nearest competitions for a new problem, then pull their strategy rows by
-   `competition_slug`. Every strategy row belongs to one `writeup_id`, so each answer can carry a link.
+3. **Retrieval (RAG)**: embed `competition_title` + `target_summary` (competitions) and `solution_summary`
+   (solutions), retrieve the nearest competitions for a new problem, then pull their strategies by
+   `competition_slug`. Every strategy row carries its solution's `writeup_url`, so each answer can cite it.
 
 Tips: ask for `usage_status` explicitly (final use versus dropped), use `constraints` (`runtime_limit`, `internet`,
 `gpu`) to skip ideas that a code competition does not allow, and group by `technique_id` to merge synonyms. The
@@ -132,41 +132,47 @@ rank unknown     ██▉                                 282
 
 Competitions by segment: Featured 315, Research 186, Playground 160, Recruitment 17. Modalities: tabular 382, image 176, text 128, time_series 81, signal 26, geospatial 21, audio 18, video 13. Task types: classification 329, regression 163, ranking 55, forecasting 45, optimization 38, generation 28, segmentation 28, object_detection 17.
 
-## The file
+## The files
 
-`kaggle_all_solutions_and_strategies.csv` stacks three kinds of rows in one table. The `record_type` column says which kind a row is.
+The **main file** `kaggle_all_solutions_and_strategies_merged.csv` stacks the three kinds of rows in one table; the `record_type` column says which kind a
+row is. The **split files** hold the same rows by kind, with only the columns that apply, so they have no
+not-applicable blanks. Use whichever is easier.
 
-| record_type | rows | one row is | columns with values |
+| file | rows | one row is | columns |
 |---|---:|---|---:|
-| `competition` | 678 | a competition: official facts, task type, modalities, metric, rules summary | 18 |
-| `solution` | 7,237 | a solution writeup: rank, medal, link, summary, frameworks, models, compute | 25 |
-| `strategy` | 62,661 | one technique in one solution: pipeline stage and whether it was used, rejected or failed | 18 |
+| `kaggle_all_solutions_and_strategies_merged.csv` (main) | 70,576 | any of the three below, marked by `record_type` | 44 |
+| `competitions.csv` | 678 | a competition: official facts, task type, modalities, metric, rules summary | 17 |
+| `solutions.csv` | 7,237 | a solution writeup: rank, medal, link, summary, frameworks, models, compute | 23 |
+| `strategies.csv` | 62,661 | one technique in one solution: pipeline stage and whether it was used, rejected or failed | 18 |
 
 How the record types fit together:
 
 ```text
-competition     678 rows  official facts, task_type, modalities, metric
-    │  competition_slug
+competition     678 rows  competitions.csv: official facts, task_type,
+    │  competition_slug      modalities, metric
     ▼
-solution      7,237 rows  one writeup of any rank: rank, medal,
-    │  writeup_id            writeup_url, summary, stack
+solution      7,237 rows  solutions.csv: one writeup of any rank: rank,
+    │  writeup_id            medal, writeup_url, summary, stack
     ▼
-strategy     62,661 rows  one technique: pipeline_stage, usage_status
-                             (used / dropped / failed)
+strategy     62,661 rows  strategies.csv: one technique: pipeline_stage,
+                             usage_status (used / dropped / failed)
 ```
 
 How to read it:
 
-1. **Filter on `record_type` first.** A column that does not apply to a record type is empty; the `in` column of the
-   column table below says where each column is used.
-2. **Join keys**: `competition_slug` links every row to its competition, and `writeup_id` links strategy rows to
-   their solution. Solution and strategy rows repeat `year`, `task_type` and `modalities` (strategy rows also `rank`,
-   `rank_status` and `medal`), so most questions need no join.
+1. **In the merged file, filter on `record_type` first.** A column that does not apply to a record type is empty
+   there (the split files leave such columns out); the column table below says which split files have each column.
+2. **Join keys**: `competition_slug` links everything to its competition, and `writeup_id` links strategies to
+   their solution. Solutions and strategies repeat `year`, `task_type` and `modalities` (strategies also
+   `writeup_url`, `rank`, `rank_status` and `medal`), so most questions need no join. `strategy_id` in
+   strategies.csv is the `record_id` of the merged file.
 3. **List and object columns are JSON strings** (`task_type`, `modalities`, `domain`, `competition_tags`,
    `constraints`, `field_sources`, `hint_tags`, `frameworks_libraries`, `models_pretrained`, `external_data`):
    parse them with `json.loads`.
 4. **Empty means unknown or not stated** — never zero and never "not used". `rank` is empty when the rank is unknown;
-   `rank_status` says how a rank was established.
+   `rank_status` says how a rank was established. `medal` is `none` for an officially ranked team without a medal
+   and empty only when the medal is unknown; `metric_name` is empty for judged hackathons (no leaderboard), and
+   `reward_quantity` when the prize is not cash (`reward_type`).
 5. **Summaries and techniques are author claims extracted by a model** (`claim_type`, `review_status`). Open
    `writeup_url` for the details.
 
@@ -184,6 +190,7 @@ How to read it:
 | `segment` | `Featured` |
 | `total_teams` | `1877` |
 | `reward_quantity` | `50000` |
+| `reward_type` | `USD` |
 | `competition_url` | https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states |
 | `competition_tags` | `["subject > health and fitness > health", "task > multiclass classification", "technique > time series analysis"]` |
 | `task_type` | `["classification", "forecasting"]` |
@@ -231,37 +238,38 @@ How to read it:
 | `rolling-window-features` | Rolling-window features | `feature-engineering` | `final_used` | Used rolling sensor statistics and a rolling median of absolute angle differences. |
 | `sliding-window-inference` | Sliding-window inference | `inference` | `final_used` | Averaged overlapping daily chunks after trimming 30 minutes from their edges. |
 
-## Columns (all 43, with a real example value)
+## Columns (all 45, with a real example value)
 
-`in`: comp = competition rows, sol = solution rows, strat = strategy rows. The same descriptions, with the example,
-are attached to each column in the Data Explorer.
+The merged file has every column except `strategy_id`. `split files`: comp = competitions.csv, sol = solutions.csv,
+strat = strategies.csv. The same descriptions, with the example, are attached to each column in the Data Explorer.
 
-| column | in | description | example |
+| column | split files | description | example |
 |---|---|---|---|
-| `record_type` | comp sol strat | Row kind: competition (one per competition), solution (one per solution writeup) or strategy (one technique used or tried in one solution). Filter on this first. | `competition / solution / strategy` |
-| `record_id` | comp sol strat | Unique id of the row within its record_type (competition slug, writeup id, or strategy id). | `child-mind-institute-detect-sleep-states (competition) · writeup-0012fd4602c0b062b5f4a8ad…` |
+| `record_type` | merged only | Row kind: competition (one per competition), solution (one per solution writeup) or strategy (one technique used or tried in one solution). Filter on this first. | `competition / solution / strategy` |
+| `record_id` | merged only | Unique id of the row within its record_type (competition slug, writeup id, or strategy id). | `child-mind-institute-detect-sleep-states (competition) · writeup-0012fd4602c0b062b5f4a8ad…` |
 | `competition_slug` | comp sol strat | Kaggle competition slug; joins all record types. URL: kaggle.com/competitions/{slug}. | `child-mind-institute-detect-sleep-states` |
 | `competition_title` | comp | Official competition title (Meta Kaggle). Competition rows. | Child Mind Institute - Detect Sleep States |
 | `year` | comp sol strat | Year of the competition deadline. | `2023` |
 | `segment` | comp | Kaggle host segment: Featured, Research, Playground or Recruitment. Competition rows. | `Featured` |
 | `total_teams` | comp | Number of teams on the final leaderboard (Meta Kaggle). Competition rows. | `1877` |
-| `reward_quantity` | comp | Prize amount as reported by Meta Kaggle (currency not normalized). Competition rows. | `50000` |
+| `reward_quantity` | comp | Prize amount as reported by Meta Kaggle (currency not normalized); empty when there is no cash amount (see reward_type). Competition rows. | `50000` |
+| `reward_type` | comp | Prize type as reported by Meta Kaggle: USD, EUR, Swag, Knowledge, Jobs, Kudos or Prizes; empty = not reported. Competition rows. | `USD` |
 | `competition_url` | comp | Competition page URL. Competition rows. | https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states |
 | `competition_tags` | comp | JSON list of official Kaggle tags of the competition. | `["subject > health and fitness > health", "task > multiclass classification", "technique…` |
 | `task_type` | comp sol strat | JSON list of task types: classification, regression, ranking, segmentation, object_detection, generation, forecasting, optimization, reinforcement_learning, clustering, other. See field_sources. | `["classification", "forecasting"]` |
 | `modalities` | comp sol strat | JSON list of data modalities: tabular, image, text, audio, video, time_series, graph, signal, geospatial, 3d, multimodal, other. | `["time_series"]` |
 | `domain` | comp | JSON list of 1-3 subject words (e.g. medicine, finance), model-assigned from the official description. | `["health"]` |
-| `metric_name` | comp | Official evaluation metric name (Meta Kaggle). Competition rows. | `Event Detection AP` |
-| `metric_direction` | comp | higher_is_better or lower_is_better (Meta Kaggle). Competition rows. | `higher_is_better` |
+| `metric_name` | comp | Official evaluation metric name (Meta Kaggle); empty for judged hackathons, which have no leaderboard metric. Competition rows. | `Event Detection AP` |
+| `metric_direction` | comp | higher_is_better or lower_is_better (Meta Kaggle); empty for judged hackathons. Competition rows. | `higher_is_better` |
 | `target_summary` | comp | One or two sentences on what is predicted, from what input, and how it is scored (model-written from the official overview, quote-checked). Competition rows. | Detect sleep-onset and wakeup events, their timesteps, and confidence scores from wrist-w… |
 | `constraints` | comp | JSON object of competition rules: code_competition, max_daily_submissions, max_team_size, public_leaderboard_percentage (official) and submission_format, runtime_limit, gpu, internet, external_data, pretrained_models (model-extracted from the rules text, quote-checked; null = not stated). | `{"code_competition": true, "external_data": "Freely and publicly available external data…` |
 | `field_sources` | comp | JSON object saying where inferred competition fields come from (official field, Kaggle tag, metric rule or llm_competition_card), so inferred values are not mistaken for official ones. | `{"constraints": "official_fields + llm_competition_card", "domain": "kaggle_tag", "modali…` |
 | `writeup_id` | sol strat | Stable id of the solution writeup; joins solution and strategy rows. | `writeup-0012fd4602c0b062b5f4a8ad` |
-| `writeup_url` | sol | Link to the original solution writeup (Kaggle discussion / writeup page, GitHub, or blog). | https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/discussion/4… |
-| `solution_title` | sol | Title of the writeup as posted. | 1st place solution |
+| `writeup_url` | sol strat | Link to the original solution writeup (Kaggle discussion / writeup page, GitHub, or blog); strategy rows repeat the link of their solution. | https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/discussion/4… |
+| `solution_title` | sol | Title of the writeup as posted (for a GitHub README without one: its first heading); empty when neither exists. | 1st place solution |
 | `rank` | sol strat | Final private leaderboard rank of the team (see rank_status). Empty when unknown. | `1` |
 | `rank_status` | sol strat | official_meta_kaggle = rank from official Meta Kaggle team data; reported_only = rank stated by the author or a source only; bound_only = only a bound such as top 10; unknown. | `official_meta_kaggle` |
-| `medal` | sol strat | Official medal of the team when known: gold, silver, bronze. | `gold` |
+| `medal` | sol strat | Official medal of the team: gold, silver or bronze; none = officially ranked without a medal (outside the medal zone, or a competition without medals); empty = unknown (the rank is not official). | `gold` |
 | `source_type` | sol | Where the writeup lives: kaggle_official_writeup, kaggle_discussion_unlinked, kaggle_writeup_page, kaggle_notebook, kaggle_other_page, kaggle_blog_legacy, github_repo, external_web. | `kaggle_official_writeup` |
 | `team_link` | sol | official_team_link = the writeup is tied to the official team; claimed_only = only the author's claim links it; unknown. | `official_team_link` |
 | `source_license` | sol | License of the source text when known (kaggle_platform_terms for Kaggle pages, SPDX-like id for GitHub repositories); empty = unknown. The original text is not included here. | `kaggle_platform_terms` |
@@ -281,6 +289,7 @@ are attached to each column in the Data Explorer.
 | `models_pretrained` | sol | JSON list of models / pretrained weights named in the writeup. Solution rows. | `["DeepChem/ChemBERTa-77M-MTR"]` |
 | `compute` | sol | Hardware and training time as stated in the writeup (e.g. 4x A100, 2 days); empty = not stated (never assumed to be zero). Solution rows. | About two hours for inference. |
 | `external_data` | sol | JSON list of external datasets named in the writeup. Solution rows. | `["2018 external data"]` |
+| `strategy_id` | strat | Unique id of the strategy row (one technique in one solution); record_id of the merged file. | `card-strategy-ecd35cf7e0080fba06d483a1` |
 
 ## Values of the categorical columns
 
@@ -364,11 +373,14 @@ External data            ███████████▉                   
 import json
 import pandas as pd
 
-PATH = "data/kaggle_all_solutions_and_strategies.csv"
-df = pd.read_csv(PATH, low_memory=False)
-comps = df[df.record_type == "competition"]
-sols = df[df.record_type == "solution"]
-strat = df[df.record_type == "strategy"]
+DATA = "data/"
+comps = pd.read_csv(DATA + "competitions.csv")
+sols = pd.read_csv(DATA + "solutions.csv")
+strat = pd.read_csv(DATA + "strategies.csv")
+# or the merged main file, filtered by record_type:
+# df = pd.read_csv(DATA + "kaggle_all_solutions_and_strategies_merged.csv",
+#                  low_memory=False)
+# sols = df[df.record_type == "solution"]
 
 # List columns are JSON strings
 comps = comps.assign(task_type=comps.task_type.map(json.loads),
@@ -442,15 +454,18 @@ Meta Kaggle (Kaggle, Apache 2.0); solution writeups by the Kaggle community (lin
 annotation datasets and winners' interview posts used for discovery and hints. Please credit the original authors
 through the `writeup_url` links when you use their ideas.
 
-## File name
+## File names
 
-Since 0.5.0 the file is `kaggle_all_solutions_and_strategies.csv` (earlier: `kaggle_top_solutions_and_strategies.csv`) because writeups of all
-ranks are collected; the title and URL keep "Top" because Kaggle dataset URLs cannot be renamed. This card
-describes version 20261024T054530Z.
+The main file is `kaggle_all_solutions_and_strategies_merged.csv`: "all" because writeups of all ranks are collected, "merged" because it holds every record
+type in one table. Earlier names: kaggle_top_solutions_and_strategies.csv (0.4.0 and earlier), kaggle_all_solutions_and_strategies.csv (0.5.0 and Kaggle v4). The split files `competitions.csv`, `solutions.csv` and
+`strategies.csv` were added with Kaggle version 5. The title and URL keep "Top" because Kaggle dataset URLs cannot be
+renamed. This card describes version 0.6.0.
 
 ## 한국어 소개
 
-캐글 대회의 공개 풀이 글(순위와 관계없이 모두)을 모아 풀이별 짧은 요약과 사용한 기법을 정리한 CSV 하나입니다.
+캐글 대회의 공개 풀이 글(순위와 관계없이 모두)을 모아 풀이별 짧은 요약과 사용한 기법을 정리한 데이터입니다.
+모든 행을 합친 기본 파일(`kaggle_all_solutions_and_strategies_merged.csv`)과, 같은 행을 종류별로 나눈
+`competitions.csv`·`solutions.csv`·`strategies.csv`가 함께 있습니다.
 사람이나 AI 에이전트가 "비슷한 대회에서 상위 팀은 무엇을 썼고, 무엇을 시도했다가 버렸는지"를 빠르게 찾을 수 있게
 만들었습니다. 원문은 복사하지 않고 링크(`writeup_url`)로 연결합니다. 같은 데이터는
 [Kaggle 데이터셋](https://www.kaggle.com/datasets/taeyangg4/kaggle-top-solutions-and-strategies)에도 있으며, 매월 갱신을 목표로 합니다. 데이터를 모으고
@@ -465,6 +480,7 @@ loads the file and shows interactive charts and ready-made tools for AI agents. 
 
 | date (UTC) | version | what changed |
 |---|---|---|
+| 2026-10-24 | 0.6.0 (Kaggle v5) | Added competitions.csv, solutions.csv and strategies.csv: the same rows as the merged main file (now kaggle_all_solutions_and_strategies_merged.csv) without not-applicable columns. Filled 283 empty solution titles (official Kaggle post titles, README headings), medal none for 1,089 officially ranked solutions without a medal, writeup_url on every strategy row, and a new reward_type column; empty metric and prize values are explained in the column descriptions. |
 | 2026-10-24 | 20261024T054530Z (Kaggle v4) | Added rsna-knee-abnormality-detection (ended 2026-10-22): 19 solution writeups and 215 technique rows; ranks come from the writeup titles until Kaggle publishes the final leaderboard. kaggriculture ranks and medals are now official (Meta Kaggle 2364). One more Cassava writeup summarized. |
 | 2026-10-24 | 0.5.0 (Kaggle v3) | Same rows as 0.4.0; the file is now kaggle_all_solutions_and_strategies.csv. Data card: example rows, an example value for every column, a usage and AI agent guide, diagrams, charts and this log. Example notebook: interactive charts and agent tools. |
 | 2026-10-23 | 0.4.0 (Kaggle v2) | First full release: solution writeups of all ranks for 677 finished competitions (2010-2026) with short summaries and techniques, in one CSV with links instead of writeup text. |
