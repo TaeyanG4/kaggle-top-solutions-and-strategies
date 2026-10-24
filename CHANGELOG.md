@@ -2,7 +2,7 @@
 
 Newest first. Dates are UTC.
 
-## 0.6.0 (Kaggle v5) — 2026-10-24
+## 0.6.0 (Kaggle v6) — 2026-10-24
 
 Added competitions.csv, solutions.csv and strategies.csv: the same rows as the merged main file (now kaggle_all_solutions_and_strategies_merged.csv) without not-applicable columns. Filled 283 empty solution titles (official Kaggle post titles, README headings), medal none for 1,089 officially ranked solutions without a medal, writeup_url on every strategy row, and a new reward_type column; empty metric and prize values are explained in the column descriptions.
 
