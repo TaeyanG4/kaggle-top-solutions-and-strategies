@@ -433,7 +433,7 @@ Counted from this version (number of distinct solutions in brackets):
    writeup**; failures were regenerated in single-writeup sessions. Summaries were checked so that numbers and
    names appear in the writeup; the few that keep a term not found literally (usually an expanded abbreviation)
    are marked in `review_status`.
-4. **Quality checks**: a separate LLM session re-read a random sample of 200 writeups and compared them with their cards: 99.0% of technique entries were judged correct and 195 of 200 summaries fully supported (same model family, not a human review). A 30-writeup test found no content mixed between writeups processed in the same session.
+4. **Quality checks**: a separate LLM session re-read a random sample of 200 writeups and compared them with their cards (2026-10-23): 99.0% of technique entries were judged correct and 195 of 200 summaries fully supported (same model family, not a human review; cards regenerated or added after the sample was drawn were not re-checked). A 30-writeup test on cards of the first prompt version found no content mixed between writeups processed in the same session.
 
 No writeup text is redistributed: the file holds links, short model-written summaries, tags and official facts.
 
